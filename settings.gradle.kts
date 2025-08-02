@@ -1,13 +1,8 @@
-rootProject.name = "surf-cloud-plugin-template"
+rootProject.name = "surf-whitelist"
 
-include("surf-cloud-plugin-template-api:surf-cloud-plugin-template-common-api")
-include("surf-cloud-plugin-template-api:surf-cloud-plugin-template-client-api:surf-cloud-plugin-template-client-common-api")
-include("surf-cloud-plugin-template-api:surf-cloud-plugin-template-client-api:surf-cloud-plugin-template-client-paper-api")
-include("surf-cloud-plugin-template-api:surf-cloud-plugin-template-client-api:surf-cloud-plugin-template-client-velocity-api")
-include("surf-cloud-plugin-template-api:surf-cloud-plugin-template-server-api")
-
-include("surf-cloud-plugin-template-core:surf-cloud-plugin-template-core-common")
-include("surf-cloud-plugin-template-core:surf-cloud-plugin-template-core-client")
-include("surf-cloud-plugin-template-paper")
-include("surf-cloud-plugin-template-velocity")
-include("surf-cloud-plugin-template-server")
+include("surf-whitelist-api")
+include("surf-whitelist-core:surf-whitelist-core-common")
+include("surf-whitelist-core:surf-whitelist-core-client")
+include("surf-whitelist-paper")
+include("surf-whitelist-velocity")
+include("surf-whitelist-server")

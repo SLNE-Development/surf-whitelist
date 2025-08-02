@@ -1,0 +1,10 @@
+name: surf-whitelist-server
+main: 'dev.slne.surf.whitelist.server.PluginMain'
+bootstrapper: 'dev.slne.surf.whitelist.server.PluginBootstrap'
+#loader: 'dev.slne.surf.whitelist.server.PluginLoader'
+version: 1.21.7-1.0.0
+description: 'Template plugin'
+#authors:
+#  - 'slne'
+#contributors:
+#  - 'slne2'

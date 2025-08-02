@@ -9,6 +9,6 @@ buildscript {
 }
 
 allprojects {
-    group = "dev.slne.surf.template"
+    group = "dev.slne.surf.whitelist"
     version = findProperty("version") as String
 }
