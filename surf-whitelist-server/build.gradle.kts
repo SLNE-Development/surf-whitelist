@@ -4,6 +4,7 @@ plugins {
 
 surfCoreApi {
     withCloudServer()
+    migrationMainClass("dev.slne.surf.whitelist.server.GenerateMigrationScriptKt")
 }
 
 dependencies {

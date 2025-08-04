@@ -3,7 +3,7 @@ plugins {
 }
 
 surfCoreApi {
-    withCloudCommon()
+    withCloudClientCommon()
 }
 
 dependencies {
