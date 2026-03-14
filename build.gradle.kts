@@ -1,14 +1,6 @@
-buildscript {
-    repositories {
-        gradlePluginPortal()
-        maven("https://repo.slne.dev/repository/maven-public/") { name = "maven-public" }
-    }
-    dependencies {
-        classpath("dev.slne.surf:surf-api-gradle-plugin:1.21.7+")
-    }
+plugins {
+    id("dev.slne.surf.surfapi.gradle.paper-plugin") version "1.21.11+"
 }
 
-allprojects {
-    group = "dev.slne.surf.whitelist"
-    version = findProperty("version") as String
-}
+group = "dev.slne.surf.freebuild.whitelist"
+version = findProperty("version") as String

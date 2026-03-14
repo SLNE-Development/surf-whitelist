@@ -1,8 +1,8 @@
-rootProject.name = "surf-whitelist"
+rootProject.name = "surf-freebuild-whitelist"
 
-include("surf-whitelist-api")
-include("surf-whitelist-core:surf-whitelist-core-common")
-include("surf-whitelist-core:surf-whitelist-core-client")
-include("surf-whitelist-paper")
-include("surf-whitelist-velocity")
-include("surf-whitelist-server")
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven("https://repo.slne.dev/repository/maven-public/") { name = "maven-public" }
+    }
+}
