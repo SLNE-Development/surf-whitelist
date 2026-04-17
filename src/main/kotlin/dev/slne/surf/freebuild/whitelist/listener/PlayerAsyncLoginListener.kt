@@ -1,8 +1,8 @@
 package dev.slne.surf.freebuild.whitelist.listener
 
 import dev.slne.surf.freebuild.whitelist.database.service.whitelistService
-import dev.slne.surf.surfapi.core.api.messages.adventure.appendNewline
-import dev.slne.surf.surfapi.core.api.messages.adventure.buildText
+import dev.slne.surf.api.core.messages.adventure.appendNewline
+import dev.slne.surf.api.core.messages.adventure.buildText
 import kotlinx.coroutines.runBlocking
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener

@@ -6,10 +6,10 @@ import dev.jorel.commandapi.kotlindsl.literalArgument
 import dev.jorel.commandapi.kotlindsl.stringArgument
 import dev.slne.surf.freebuild.whitelist.command.permission.PermissionRegistry
 import dev.slne.surf.freebuild.whitelist.database.service.whitelistService
-import dev.slne.surf.surfapi.bukkit.api.command.executors.anyExecutorSuspend
-import dev.slne.surf.surfapi.core.api.messages.adventure.clickCopiesToClipboard
-import dev.slne.surf.surfapi.core.api.messages.adventure.sendText
-import dev.slne.surf.surfapi.core.api.service.PlayerLookupService
+import dev.slne.surf.api.paper.command.executors.anyExecutorSuspend
+import dev.slne.surf.api.core.messages.adventure.clickCopiesToClipboard
+import dev.slne.surf.api.core.messages.adventure.sendText
+import dev.slne.surf.api.core.service.PlayerLookupService
 
 fun freebuildWhitelistCommand() = commandTree("freebuildwhitelist") {
     withPermission(PermissionRegistry.COMMAND_WL_VIEW)
