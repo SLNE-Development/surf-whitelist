@@ -4,7 +4,7 @@ import java.time.OffsetDateTime
 import java.util.*
 
 data class WhitelistEntry(
-    val discordUserId: Long,
+    val discordUserId: Long?,
     val minecraftUuid: UUID,
     val twitchId: Long?,
     val blocked: Boolean,
