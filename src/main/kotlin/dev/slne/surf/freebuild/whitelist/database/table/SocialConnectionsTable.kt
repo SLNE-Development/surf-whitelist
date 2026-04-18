@@ -3,12 +3,10 @@ package dev.slne.surf.freebuild.whitelist.database.table
 import dev.slne.surf.database.columns.nativeUuid
 import dev.slne.surf.database.columns.time.offsetDateTime
 import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.core.dao.id.LongIdTable
+import dev.slne.surf.database.table.AuditableLongIdTable
 
-object SocialsTable : LongIdTable("social_connections_new") {
-    val discordUserId = long("discord_user_id").uniqueIndex()
+object SocialConnectionsTable : AuditableLongIdTable("social_connections_new") {
     val minecraftUuid = nativeUuid("minecraft_uuid").uniqueIndex()
+    val discordUserId = long("discord_user_id").uniqueIndex().nullable()
     val twitchId = long("twitch_id").uniqueIndex().nullable()
-    val blocked = bool("blocked").default(false)
-    val createdAt = offsetDateTime("created_at")
-    val updatedAt = offsetDateTime("updated_at")
 }
