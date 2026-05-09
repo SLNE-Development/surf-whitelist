@@ -1,5 +1,6 @@
 package dev.slne.surf.freebuild.whitelist.listener
 
+import dev.slne.surf.freebuild.whitelist.command.permission.PermissionRegistry
 import dev.slne.surf.freebuild.whitelist.database.service.whitelistService
 import dev.slne.surf.freebuild.whitelist.plugin
 import dev.slne.surf.api.core.messages.adventure.appendNewline
@@ -12,8 +13,6 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent
 import java.util.UUID
 
 object PlayerAsyncLoginListener : Listener {
-    private const val BYPASS_PERMISSION = "surf.freebuild.whitelist.bypass"
-
     @EventHandler
     fun onAsyncPreLogin(event: AsyncPlayerPreLoginEvent) {
         val playerUuid = event.uniqueId
@@ -52,7 +51,7 @@ object PlayerAsyncLoginListener : Listener {
         return try {
             val userManager = LuckPermsProvider.get().userManager
             val user = userManager.getUser(playerUuid) ?: userManager.loadUser(playerUuid).join()
-            user.cachedData.permissionData.checkPermission(BYPASS_PERMISSION).asBoolean()
+            user.cachedData.permissionData.checkPermission(PermissionRegistry.BYPASS_NODE).asBoolean()
         } catch (exception: Exception) {
             plugin.logger.warning("Failed to resolve LuckPerms bypass permission for player $playerUuid: ${exception.message}")
             false
