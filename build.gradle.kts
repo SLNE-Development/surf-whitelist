@@ -1,3 +1,6 @@
+import dev.slne.surf.api.gradle.util.registerRequired
+import dev.slne.surf.api.gradle.util.registerSoft
+
 plugins {
     id("dev.slne.surf.api.gradle.paper-plugin") version "+"
 }
@@ -15,6 +18,10 @@ surfPaperPluginApi {
     generateLibraryLoader(false)
     withSurfDatabaseR2dbc("1.1.0-SNAPSHOT", "dev.slne.surf.freebuild.whitelist.libs")
     withCorePaper()
+
+    serverDependencies {
+        registerRequired("LuckPerms")
+    }
 
     authors.add("red")
 }
