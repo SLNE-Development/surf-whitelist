@@ -5,6 +5,10 @@ plugins {
 group = "dev.slne.surf.freebuild.whitelist"
 version = findProperty("version") as String
 
+dependencies {
+    compileOnly("net.luckperms:api:5.4")
+}
+
 surfPaperPluginApi {
     mainClass("dev.slne.surf.freebuild.whitelist.PaperMain")
     foliaSupported(true)
