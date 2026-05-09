@@ -20,14 +20,14 @@ object PlayerAsyncLoginListener : Listener {
     fun onAsyncPreLogin(event: AsyncPlayerPreLoginEvent) {
         val playerUuid = event.uniqueId
 
-        if (hasBypassPermission(playerUuid)) {
-            return
-        }
-
         runBlocking {
             val simpleWhitelist = whitelistService.findSimpleWhitelist(playerUuid)
 
             if (simpleWhitelist == null) {
+                if (hasBypassPermission(playerUuid)) {
+                    return@runBlocking
+                }
+
                 event.disallow(
                     AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST,
                     buildKickMessage(
@@ -39,6 +39,10 @@ object PlayerAsyncLoginListener : Listener {
             }
 
             if (simpleWhitelist.blocked) {
+                if (hasBypassPermission(playerUuid)) {
+                    return@runBlocking
+                }
+
                 event.disallow(
                     AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST,
                     buildKickMessage(
