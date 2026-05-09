@@ -17,7 +17,7 @@ object PlayerLoginListener : Listener {
     private const val FIVE_MINUTES_IN_MILLIS = 5 * 60 * 1000L
     private const val LOGIN_STATUS_TTL_MILLIS = FIVE_MINUTES_IN_MILLIS
     @Volatile
-    private var lastCleanupAtMillis = 0L
+    private var lastCleanupAtMillis = System.currentTimeMillis()
 
     @EventHandler
     fun onAsyncPreLogin(event: AsyncPlayerPreLoginEvent) {
