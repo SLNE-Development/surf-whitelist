@@ -61,6 +61,14 @@ object PlayerAsyncLoginListener : Listener {
             val queryOptions = contextManager.getQueryOptions(user).orElse(contextManager.staticQueryOptions)
 
             user.cachedData.getPermissionData(queryOptions).checkPermission(PermissionRegistry.BYPASS_NODE).asBoolean()
+        } catch (exception: InterruptedException) {
+            Thread.currentThread().interrupt()
+            plugin.logger.log(
+                Level.WARNING,
+                "Interrupted while loading LuckPerms user for player $playerUuid; bypass check defaults to false.",
+                exception
+            )
+            false
         } catch (exception: TimeoutException) {
             plugin.logger.warning("Timed out while loading LuckPerms user for player $playerUuid; bypass check defaults to false.")
             false
