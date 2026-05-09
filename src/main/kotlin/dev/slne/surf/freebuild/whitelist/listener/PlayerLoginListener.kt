@@ -47,27 +47,17 @@ object PlayerLoginListener : Listener {
         }
 
         when (loginStatus.remove(playerUuid)?.status) {
-            LoginStatus.NOT_WHITELISTED -> {
-                event.disallow(
-                    PlayerLoginEvent.Result.KICK_WHITELIST,
-                    buildKickMessage(
-                        "DU BEFINDEST DICH NICHT AUF DER WHITELIST",
-                        "Um auf dem Survival Server spielen zu können, musst du dich auf der Whitelist befinden. Weitere Informationen findest du im Discord."
-                    )
-                )
-            }
-            LoginStatus.BLOCKED -> {
-                event.disallow(
-                    PlayerLoginEvent.Result.KICK_WHITELIST,
-                    buildKickMessage(
-                        "DEINE WHITELIST WURDE GESPERRT",
-                        "Du hast unseren Discord Server verlassen und wurdest deshalb vom Survival Server gesperrt. Wenn du weiterhin auf dem Survival Server spielen möchtest, musst du den Discord Server erneut betreten. Eine erneute Whitelist ist nicht notwendig."
-                    )
-                )
-            }
+            LoginStatus.NOT_WHITELISTED -> disallowNotWhitelisted(event)
+            LoginStatus.BLOCKED -> disallowBlocked(event)
             LoginStatus.ALLOWED -> Unit
             null -> {
-                handleMissingLoginStatus(event, playerUuid)
+                event.disallow(
+                    PlayerLoginEvent.Result.KICK_WHITELIST,
+                    buildKickMessage(
+                        "DEINE WHITELIST KONNTE NICHT ÜBERPRÜFT WERDEN",
+                        "Bitte versuche es erneut. Wenn das Problem weiterhin besteht, kontaktiere bitte den Support."
+                    )
+                )
             }
         }
     }
@@ -82,27 +72,24 @@ object PlayerLoginListener : Listener {
         lastCleanupAtMillis = now
     }
 
-    private fun handleMissingLoginStatus(event: PlayerLoginEvent, playerUuid: UUID) {
-        runBlocking {
-            val simpleWhitelist = whitelistService.findSimpleWhitelist(playerUuid)
+    private fun disallowNotWhitelisted(event: PlayerLoginEvent) {
+        event.disallow(
+            PlayerLoginEvent.Result.KICK_WHITELIST,
+            buildKickMessage(
+                "DU BEFINDEST DICH NICHT AUF DER WHITELIST",
+                "Um auf dem Survival Server spielen zu können, musst du dich auf der Whitelist befinden. Weitere Informationen findest du im Discord."
+            )
+        )
+    }
 
-            when {
-                simpleWhitelist == null -> event.disallow(
-                    PlayerLoginEvent.Result.KICK_WHITELIST,
-                    buildKickMessage(
-                        "DU BEFINDEST DICH NICHT AUF DER WHITELIST",
-                        "Um auf dem Survival Server spielen zu können, musst du dich auf der Whitelist befinden. Weitere Informationen findest du im Discord."
-                    )
-                )
-                simpleWhitelist.blocked -> event.disallow(
-                    PlayerLoginEvent.Result.KICK_WHITELIST,
-                    buildKickMessage(
-                        "DEINE WHITELIST WURDE GESPERRT",
-                        "Du hast unseren Discord Server verlassen und wurdest deshalb vom Survival Server gesperrt. Wenn du weiterhin auf dem Survival Server spielen möchtest, musst du den Discord Server erneut betreten. Eine erneute Whitelist ist nicht notwendig."
-                    )
-                )
-            }
-        }
+    private fun disallowBlocked(event: PlayerLoginEvent) {
+        event.disallow(
+            PlayerLoginEvent.Result.KICK_WHITELIST,
+            buildKickMessage(
+                "DEINE WHITELIST WURDE GESPERRT",
+                "Du hast unseren Discord Server verlassen und wurdest deshalb vom Survival Server gesperrt. Wenn du weiterhin auf dem Survival Server spielen möchtest, musst du den Discord Server erneut betreten. Eine erneute Whitelist ist nicht notwendig."
+            )
+        )
     }
 
     private fun buildKickMessage(header: String, reason: String) = buildText {
