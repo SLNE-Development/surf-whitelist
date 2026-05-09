@@ -14,7 +14,10 @@ import java.util.concurrent.ConcurrentHashMap
 
 object PlayerLoginListener : Listener {
     private val loginStatus = ConcurrentHashMap<UUID, LoginCheck>()
-    private const val STATUS_TTL_MILLIS = 5 * 60 * 1000L
+    private const val FIVE_MINUTES_IN_MILLIS = 5 * 60 * 1000L
+    private const val LOGIN_STATUS_TTL_MILLIS = FIVE_MINUTES_IN_MILLIS
+    @Volatile
+    private var lastCleanupAtMillis = 0L
 
     @EventHandler
     fun onAsyncPreLogin(event: AsyncPlayerPreLoginEvent) {
@@ -64,20 +67,42 @@ object PlayerLoginListener : Listener {
             }
             LoginStatus.ALLOWED -> Unit
             null -> {
-                event.disallow(
-                    PlayerLoginEvent.Result.KICK_WHITELIST,
-                    buildKickMessage(
-                        "DEINE WHITELIST KONNTE NICHT ÜBERPRÜFT WERDEN",
-                        "Bitte versuche es erneut. Wenn das Problem weiterhin besteht, kontaktiere bitte den Support."
-                    )
-                )
+                handleMissingLoginStatus(event, playerUuid)
             }
         }
     }
 
     private fun cleanupExpiredStatuses() {
         val now = System.currentTimeMillis()
-        loginStatus.entries.removeIf { now - it.value.createdAtMillis > STATUS_TTL_MILLIS }
+        if (now - lastCleanupAtMillis < LOGIN_STATUS_TTL_MILLIS) {
+            return
+        }
+
+        loginStatus.entries.removeIf { now - it.value.createdAtMillis > LOGIN_STATUS_TTL_MILLIS }
+        lastCleanupAtMillis = now
+    }
+
+    private fun handleMissingLoginStatus(event: PlayerLoginEvent, playerUuid: UUID) {
+        runBlocking {
+            val simpleWhitelist = whitelistService.findSimpleWhitelist(playerUuid)
+
+            when {
+                simpleWhitelist == null -> event.disallow(
+                    PlayerLoginEvent.Result.KICK_WHITELIST,
+                    buildKickMessage(
+                        "DU BEFINDEST DICH NICHT AUF DER WHITELIST",
+                        "Um auf dem Survival Server spielen zu können, musst du dich auf der Whitelist befinden. Weitere Informationen findest du im Discord."
+                    )
+                )
+                simpleWhitelist.blocked -> event.disallow(
+                    PlayerLoginEvent.Result.KICK_WHITELIST,
+                    buildKickMessage(
+                        "DEINE WHITELIST WURDE GESPERRT",
+                        "Du hast unseren Discord Server verlassen und wurdest deshalb vom Survival Server gesperrt. Wenn du weiterhin auf dem Survival Server spielen möchtest, musst du den Discord Server erneut betreten. Eine erneute Whitelist ist nicht notwendig."
+                    )
+                )
+            }
+        }
     }
 
     private fun buildKickMessage(header: String, reason: String) = buildText {
