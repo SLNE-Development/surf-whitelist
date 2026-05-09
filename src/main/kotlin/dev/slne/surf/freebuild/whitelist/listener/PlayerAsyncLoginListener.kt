@@ -11,6 +11,9 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent
 import java.util.UUID
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.logging.Level
 
 object PlayerAsyncLoginListener : Listener {
     @EventHandler
@@ -49,11 +52,23 @@ object PlayerAsyncLoginListener : Listener {
 
     private fun hasBypassPermission(playerUuid: UUID): Boolean {
         return try {
-            val userManager = LuckPermsProvider.get().userManager
-            val user = userManager.getUser(playerUuid) ?: userManager.loadUser(playerUuid).join()
-            user.cachedData.permissionData.checkPermission(PermissionRegistry.BYPASS_NODE).asBoolean()
+            val luckPerms = LuckPermsProvider.get()
+            val userManager = luckPerms.userManager
+            val user = userManager.getUser(playerUuid)
+                ?: userManager.loadUser(playerUuid).get(3, TimeUnit.SECONDS)
+            val contextManager = luckPerms.contextManager
+            val queryOptions = contextManager.getQueryOptions(user).orElse(contextManager.staticQueryOptions)
+
+            user.cachedData.getPermissionData(queryOptions).checkPermission(PermissionRegistry.BYPASS_NODE).asBoolean()
+        } catch (exception: TimeoutException) {
+            plugin.logger.warning("Timed out while loading LuckPerms user for player $playerUuid; bypass check defaults to false.")
+            false
         } catch (exception: Exception) {
-            plugin.logger.warning("Failed to resolve LuckPerms bypass permission for player $playerUuid: ${exception.message}")
+            plugin.logger.log(
+                Level.WARNING,
+                "Failed to resolve LuckPerms bypass permission for player $playerUuid.",
+                exception
+            )
             false
         }
     }
