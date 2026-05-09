@@ -1,5 +1,4 @@
 import dev.slne.surf.api.gradle.util.registerRequired
-import dev.slne.surf.api.gradle.util.registerSoft
 
 plugins {
     id("dev.slne.surf.api.gradle.paper-plugin") version "+"
@@ -7,10 +6,6 @@ plugins {
 
 group = "dev.slne.surf.freebuild.whitelist"
 version = findProperty("version") as String
-
-dependencies {
-    compileOnly("net.luckperms:api:5.4")
-}
 
 surfPaperPluginApi {
     mainClass("dev.slne.surf.freebuild.whitelist.PaperMain")
