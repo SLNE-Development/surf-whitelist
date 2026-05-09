@@ -2,6 +2,7 @@ package dev.slne.surf.freebuild.whitelist.listener
 
 import dev.slne.surf.freebuild.whitelist.command.permission.PermissionRegistry
 import dev.slne.surf.freebuild.whitelist.database.service.whitelistService
+import dev.slne.surf.freebuild.whitelist.plugin
 import dev.slne.surf.api.core.messages.adventure.appendNewline
 import dev.slne.surf.api.core.messages.adventure.buildText
 import kotlinx.coroutines.runBlocking
@@ -14,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 object PlayerLoginListener : Listener {
     private val loginStatus = ConcurrentHashMap<UUID, LoginCheck>()
+    private val cleanupLock = Any()
     private const val FIVE_MINUTES_IN_MILLIS = 5 * 60 * 1000L
     private const val LOGIN_STATUS_TTL_MILLIS = FIVE_MINUTES_IN_MILLIS
     @Volatile
@@ -51,6 +53,7 @@ object PlayerLoginListener : Listener {
             LoginStatus.BLOCKED -> disallowBlocked(event)
             LoginStatus.ALLOWED -> Unit
             null -> {
+                plugin.logger.warning("Missing whitelist pre-login status for player $playerUuid; denying login as safety fallback.")
                 event.disallow(
                     PlayerLoginEvent.Result.KICK_WHITELIST,
                     buildKickMessage(
@@ -63,13 +66,15 @@ object PlayerLoginListener : Listener {
     }
 
     private fun cleanupExpiredStatuses() {
-        val now = System.currentTimeMillis()
-        if (now - lastCleanupAtMillis < LOGIN_STATUS_TTL_MILLIS) {
-            return
-        }
+        synchronized(cleanupLock) {
+            val now = System.currentTimeMillis()
+            if (now - lastCleanupAtMillis < LOGIN_STATUS_TTL_MILLIS) {
+                return
+            }
 
-        loginStatus.entries.removeIf { now - it.value.createdAtMillis > LOGIN_STATUS_TTL_MILLIS }
-        lastCleanupAtMillis = now
+            loginStatus.entries.removeIf { now - it.value.createdAtMillis > LOGIN_STATUS_TTL_MILLIS }
+            lastCleanupAtMillis = now
+        }
     }
 
     private fun disallowNotWhitelisted(event: PlayerLoginEvent) {
