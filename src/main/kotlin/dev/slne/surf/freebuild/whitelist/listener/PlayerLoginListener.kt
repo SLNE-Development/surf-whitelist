@@ -16,8 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
 object PlayerLoginListener : Listener {
     private val loginStatus = ConcurrentHashMap<UUID, LoginCheck>()
     private val cleanupLock = Any()
-    private const val FIVE_MINUTES_IN_MILLIS = 5 * 60 * 1000L
-    private const val LOGIN_STATUS_TTL_MILLIS = FIVE_MINUTES_IN_MILLIS
+    private const val LOGIN_STATUS_TTL_MILLIS = 5 * 60 * 1000L
     @Volatile
     private var lastCleanupAtMillis = System.currentTimeMillis()
 
