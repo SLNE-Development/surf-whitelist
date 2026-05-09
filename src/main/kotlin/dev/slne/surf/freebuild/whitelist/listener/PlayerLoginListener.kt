@@ -13,21 +13,23 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 object PlayerLoginListener : Listener {
-    private val loginStatus = ConcurrentHashMap<UUID, LoginStatus>()
+    private val loginStatus = ConcurrentHashMap<UUID, LoginCheck>()
+    private const val STATUS_TTL_MILLIS = 5 * 60 * 1000L
 
     @EventHandler
     fun onAsyncPreLogin(event: AsyncPlayerPreLoginEvent) {
         val playerUuid = event.uniqueId
+        cleanupExpiredStatuses()
 
         runBlocking {
             val simpleWhitelist = whitelistService.findSimpleWhitelist(playerUuid)
 
             if (simpleWhitelist == null) {
-                loginStatus[playerUuid] = LoginStatus.NOT_WHITELISTED
+                loginStatus[playerUuid] = LoginCheck(LoginStatus.NOT_WHITELISTED)
                 return@runBlocking
             }
 
-            loginStatus[playerUuid] = if (simpleWhitelist.blocked) LoginStatus.BLOCKED else LoginStatus.ALLOWED
+            loginStatus[playerUuid] = LoginCheck(if (simpleWhitelist.blocked) LoginStatus.BLOCKED else LoginStatus.ALLOWED)
         }
     }
 
@@ -41,7 +43,7 @@ object PlayerLoginListener : Listener {
             return
         }
 
-        when (loginStatus.remove(playerUuid)) {
+        when (loginStatus.remove(playerUuid)?.status) {
             LoginStatus.NOT_WHITELISTED -> {
                 event.disallow(
                     PlayerLoginEvent.Result.KICK_WHITELIST,
@@ -60,8 +62,22 @@ object PlayerLoginListener : Listener {
                     )
                 )
             }
-            LoginStatus.ALLOWED, null -> Unit
+            LoginStatus.ALLOWED -> Unit
+            null -> {
+                event.disallow(
+                    PlayerLoginEvent.Result.KICK_WHITELIST,
+                    buildKickMessage(
+                        "DEINE WHITELIST KONNTE NICHT ÜBERPRÜFT WERDEN",
+                        "Bitte versuche es erneut. Wenn das Problem weiterhin besteht, kontaktiere bitte den Support."
+                    )
+                )
+            }
         }
+    }
+
+    private fun cleanupExpiredStatuses() {
+        val now = System.currentTimeMillis()
+        loginStatus.entries.removeIf { now - it.value.createdAtMillis > STATUS_TTL_MILLIS }
     }
 
     private fun buildKickMessage(header: String, reason: String) = buildText {
@@ -84,4 +100,9 @@ object PlayerLoginListener : Listener {
         NOT_WHITELISTED,
         BLOCKED
     }
+
+    private data class LoginCheck(
+        val status: LoginStatus,
+        val createdAtMillis: Long = System.currentTimeMillis()
+    )
 }
