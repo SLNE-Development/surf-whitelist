@@ -7,22 +7,42 @@ import dev.slne.surf.api.core.messages.adventure.buildText
 import kotlinx.coroutines.runBlocking
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent
 import org.bukkit.event.player.PlayerLoginEvent
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
-object PlayerAsyncLoginListener : Listener {
+object PlayerLoginListener : Listener {
+    private val loginStatus = ConcurrentHashMap<UUID, LoginStatus>()
+
+    @EventHandler
+    fun onAsyncPreLogin(event: AsyncPlayerPreLoginEvent) {
+        val playerUuid = event.uniqueId
+
+        runBlocking {
+            val simpleWhitelist = whitelistService.findSimpleWhitelist(playerUuid)
+
+            if (simpleWhitelist == null) {
+                loginStatus[playerUuid] = LoginStatus.NOT_WHITELISTED
+                return@runBlocking
+            }
+
+            loginStatus[playerUuid] = if (simpleWhitelist.blocked) LoginStatus.BLOCKED else LoginStatus.ALLOWED
+        }
+    }
+
     @EventHandler
     fun onPlayerLogin(event: PlayerLoginEvent) {
         val player = event.player
         val playerUuid = player.uniqueId
 
         if (player.hasPermission(PermissionRegistry.BYPASS)) {
+            loginStatus.remove(playerUuid)
             return
         }
 
-        runBlocking {
-            val simpleWhitelist = whitelistService.findSimpleWhitelist(playerUuid)
-
-            if (simpleWhitelist == null) {
+        when (loginStatus.remove(playerUuid)) {
+            LoginStatus.NOT_WHITELISTED -> {
                 event.disallow(
                     PlayerLoginEvent.Result.KICK_WHITELIST,
                     buildKickMessage(
@@ -30,10 +50,8 @@ object PlayerAsyncLoginListener : Listener {
                         "Um auf dem Survival Server spielen zu können, musst du dich auf der Whitelist befinden. Weitere Informationen findest du im Discord."
                     )
                 )
-                return@runBlocking
             }
-
-            if (simpleWhitelist.blocked) {
+            LoginStatus.BLOCKED -> {
                 event.disallow(
                     PlayerLoginEvent.Result.KICK_WHITELIST,
                     buildKickMessage(
@@ -42,6 +60,7 @@ object PlayerAsyncLoginListener : Listener {
                     )
                 )
             }
+            LoginStatus.ALLOWED, null -> Unit
         }
     }
 
@@ -58,5 +77,11 @@ object PlayerAsyncLoginListener : Listener {
         spacer("Sollte dies ein Fehler sein, kontaktiere bitte den Support.")
         appendNewline(2)
         primary("discord.gg/castcrafter")
+    }
+
+    private enum class LoginStatus {
+        ALLOWED,
+        NOT_WHITELISTED,
+        BLOCKED
     }
 }
