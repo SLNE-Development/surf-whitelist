@@ -20,38 +20,35 @@ object PlayerAsyncLoginListener : Listener {
     fun onAsyncPreLogin(event: AsyncPlayerPreLoginEvent) {
         val playerUuid = event.uniqueId
 
-        runBlocking {
+        val disallowMessage = runBlocking {
             val simpleWhitelist = whitelistService.findSimpleWhitelist(playerUuid)
 
             if (simpleWhitelist == null) {
-                if (hasBypassPermission(playerUuid)) {
-                    return@runBlocking
-                }
-
-                event.disallow(
-                    AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST,
-                    buildKickMessage(
-                        "DU BEFINDEST DICH NICHT AUF DER WHITELIST",
-                        "Um auf dem Survival Server spielen zu können, musst du dich auf der Whitelist befinden. Weitere Informationen findest du im Discord."
-                    )
+                return@runBlocking buildKickMessage(
+                    "DU BEFINDEST DICH NICHT AUF DER WHITELIST",
+                    "Um auf dem Survival Server spielen zu können, musst du dich auf der Whitelist befinden. Weitere Informationen findest du im Discord."
                 )
-                return@runBlocking
             }
 
             if (simpleWhitelist.blocked) {
-                if (hasBypassPermission(playerUuid)) {
-                    return@runBlocking
-                }
-
-                event.disallow(
-                    AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST,
-                    buildKickMessage(
-                        "DEINE WHITELIST WURDE GESPERRT",
-                        "Du hast unseren Discord Server verlassen und wurdest deshalb vom Survival Server gesperrt. Wenn du weiterhin auf dem Survival Server spielen möchtest, musst du den Discord Server erneut betreten. Eine erneute Whitelist ist nicht notwendig."
-                    )
+                return@runBlocking buildKickMessage(
+                    "DEINE WHITELIST WURDE GESPERRT",
+                    "Du hast unseren Discord Server verlassen und wurdest deshalb vom Survival Server gesperrt. Wenn du weiterhin auf dem Survival Server spielen möchtest, musst du den Discord Server erneut betreten. Eine erneute Whitelist ist nicht notwendig."
                 )
             }
+
+            null
         }
+
+        if (disallowMessage == null) {
+            return
+        }
+
+        if (hasBypassPermission(playerUuid)) {
+            return
+        }
+
+        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, disallowMessage)
     }
 
     private fun hasBypassPermission(playerUuid: UUID): Boolean {
