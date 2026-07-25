@@ -36,7 +36,11 @@ object PlayerAsyncLoginListener : Listener {
                 return@runBlocking
             }
 
-            if (!RedisDiscordService.isDiscordMember(discordId) && WhitelistConfig.getConfig().whitelistEnabled) {
+            if (!WhitelistConfig.getConfig().whitelistEnabled) {
+                return@runBlocking
+            }
+
+            if (!RedisDiscordService.isDiscordMember(discordId)) {
                 event.disallow(
                     AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, buildKickMessage(
                         "DU BEFINDEST DICH NICHT AUF UNSEREM DISCORD SERVER",
