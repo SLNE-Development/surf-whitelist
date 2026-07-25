@@ -3,6 +3,7 @@ package dev.slne.surf.freebuild.whitelist.listener
 import dev.slne.surf.api.core.luckperms.LuckPermsAccess
 import dev.slne.surf.api.core.messages.adventure.buildText
 import dev.slne.surf.freebuild.whitelist.command.permission.PermissionRegistry
+import dev.slne.surf.freebuild.whitelist.config.WhitelistConfig
 import dev.slne.surf.freebuild.whitelist.database.repository.AccountRepository
 import dev.slne.surf.freebuild.whitelist.plugin
 import dev.slne.surf.freebuild.whitelist.redis.RedisDiscordService
@@ -35,7 +36,7 @@ object PlayerAsyncLoginListener : Listener {
                 return@runBlocking
             }
 
-            if (!RedisDiscordService.isDiscordMember(discordId)) {
+            if (!RedisDiscordService.isDiscordMember(discordId) && WhitelistConfig.getConfig().whitelistEnabled) {
                 event.disallow(
                     AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, buildKickMessage(
                         "DU BEFINDEST DICH NICHT AUF UNSEREM DISCORD SERVER",

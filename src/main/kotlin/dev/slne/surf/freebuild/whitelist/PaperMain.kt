@@ -2,6 +2,7 @@ package dev.slne.surf.freebuild.whitelist
 
 import com.github.shynixn.mccoroutine.folia.SuspendingJavaPlugin
 import dev.slne.surf.api.paper.event.register
+import dev.slne.surf.freebuild.whitelist.command.whitelistToggleCommand
 import dev.slne.surf.freebuild.whitelist.database.DatabaseService
 import dev.slne.surf.freebuild.whitelist.listener.PlayerAsyncLoginListener
 import dev.slne.surf.freebuild.whitelist.redis.RedisService
@@ -15,6 +16,8 @@ class PaperMain : SuspendingJavaPlugin() {
 
         DatabaseService.connect(plugin.dataPath)
         RedisService.connect()
+
+        whitelistToggleCommand()
     }
 
     override suspend fun onDisableAsync() {
