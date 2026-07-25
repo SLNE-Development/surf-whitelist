@@ -14,6 +14,8 @@ surfPaperPluginApi {
     withSurfDatabaseR2dbc("1.1.0-SNAPSHOT", "dev.slne.surf.freebuild.whitelist.libs")
     withCorePaper()
 
+    withSurfRedis()
+
     serverDependencies {
         registerRequired("LuckPerms")
     }

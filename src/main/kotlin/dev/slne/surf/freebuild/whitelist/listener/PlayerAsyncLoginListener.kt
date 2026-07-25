@@ -1,18 +1,16 @@
 package dev.slne.surf.freebuild.whitelist.listener
 
-import dev.slne.surf.freebuild.whitelist.command.permission.PermissionRegistry
-import dev.slne.surf.freebuild.whitelist.database.service.whitelistService
-import dev.slne.surf.freebuild.whitelist.plugin
-import dev.slne.surf.api.core.messages.adventure.appendNewline
+import dev.slne.surf.api.core.luckperms.LuckPermsAccess
 import dev.slne.surf.api.core.messages.adventure.buildText
+import dev.slne.surf.freebuild.whitelist.command.permission.PermissionRegistry
+import dev.slne.surf.freebuild.whitelist.database.repository.AccountRepository
+import dev.slne.surf.freebuild.whitelist.plugin
+import dev.slne.surf.freebuild.whitelist.redis.RedisDiscordService
 import kotlinx.coroutines.runBlocking
-import net.luckperms.api.LuckPermsProvider
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent
-import java.util.UUID
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import java.util.*
 import java.util.logging.Level
 
 object PlayerAsyncLoginListener : Listener {
@@ -20,66 +18,47 @@ object PlayerAsyncLoginListener : Listener {
     fun onAsyncPreLogin(event: AsyncPlayerPreLoginEvent) {
         val playerUuid = event.uniqueId
 
-        val disallowMessage = runBlocking {
-            val simpleWhitelist = whitelistService.findSimpleWhitelist(playerUuid)
-
-            if (simpleWhitelist == null) {
-                return@runBlocking buildKickMessage(
-                    "DU BEFINDEST DICH NICHT AUF DER WHITELIST",
-                    "Um auf dem Survival Server spielen zu können, musst du dich auf der Whitelist befinden. Weitere Informationen findest du im Discord."
-                )
+        runBlocking {
+            if (hasBypassPermission(playerUuid)) {
+                return@runBlocking
             }
 
-            if (simpleWhitelist.blocked) {
-                return@runBlocking buildKickMessage(
-                    "DEINE WHITELIST WURDE GESPERRT",
-                    "Du hast unseren Discord Server verlassen und wurdest deshalb vom Survival Server gesperrt. Wenn du weiterhin auf dem Survival Server spielen möchtest, musst du den Discord Server erneut betreten. Eine erneute Whitelist ist nicht notwendig."
+            val discordId = AccountRepository.findDiscordAccountByMinecraftUuid(playerUuid)
+
+            if (discordId == null) {
+                event.disallow(
+                    AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, buildKickMessage(
+                        "DU HAST DEINEN DISCORD ACCOUNT NICHT VERKNÜPFT",
+                        "Um auf dem Survival Server spielen zu können, musst du deinen Discord Account mit Minecraft verlinken. Weitere Informationen findest du unter https://auth.castcrafter.de/account?tabs=accounts"
+                    )
                 )
+                return@runBlocking
             }
 
-            null
+            if (!RedisDiscordService.requestDiscordMembership(discordId)) {
+                event.disallow(
+                    AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, buildKickMessage(
+                        "DU BEFINDEST DICH NICHT AUF UNSEREM DISCORD SERVER",
+                        "Du befindest dich nicht auf unserem Discord Server. Um auf dem Survival Server spielen zu können, musst du unserem Discord Server beitreten. https://discord.gg/castcrafter"
+                    )
+                )
+                return@runBlocking
+            }
         }
-
-        if (disallowMessage == null) {
-            return
-        }
-
-        if (hasBypassPermission(playerUuid)) {
-            return
-        }
-
-        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, disallowMessage)
     }
 
-    private fun hasBypassPermission(playerUuid: UUID): Boolean {
-        return try {
-            val luckPerms = LuckPermsProvider.get()
-            val userManager = luckPerms.userManager
-            val user = userManager.getUser(playerUuid)
-                ?: userManager.loadUser(playerUuid).get(3, TimeUnit.SECONDS)
-            val contextManager = luckPerms.contextManager
-            val queryOptions = contextManager.getQueryOptions(user).orElse(contextManager.staticQueryOptions)
+    private suspend fun hasBypassPermission(playerUuid: UUID) = try {
+        val user = LuckPermsAccess.getUser(playerUuid) ?: LuckPermsAccess.loadUser(playerUuid)
 
-            user.cachedData.getPermissionData(queryOptions).checkPermission(PermissionRegistry.BYPASS_NODE).asBoolean()
-        } catch (exception: InterruptedException) {
-            Thread.currentThread().interrupt()
-            plugin.logger.log(
-                Level.WARNING,
-                "Interrupted while loading LuckPerms user for player $playerUuid; bypass check defaults to false.",
-                exception
-            )
-            false
-        } catch (exception: TimeoutException) {
-            plugin.logger.warning("Timed out while loading LuckPerms user for player $playerUuid; bypass check defaults to false.")
-            false
-        } catch (exception: Exception) {
-            plugin.logger.log(
-                Level.WARNING,
-                "Failed to resolve LuckPerms bypass permission for player $playerUuid.",
-                exception
-            )
-            false
-        }
+        user.cachedData.getPermissionData(user.queryOptions)
+            .checkPermission(PermissionRegistry.BYPASS).asBoolean()
+    } catch (exception: Exception) {
+        plugin.logger.log(
+            Level.SEVERE,
+            "Failed to resolve LuckPerms bypass permission for player $playerUuid.",
+            exception
+        )
+        false
     }
 
     private fun buildKickMessage(header: String, reason: String) = buildText {
