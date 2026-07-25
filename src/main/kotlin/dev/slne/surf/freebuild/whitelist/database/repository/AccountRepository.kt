@@ -12,7 +12,7 @@ object AccountRepository {
     suspend fun findDiscordAccountByMinecraftUuid(minecraftUuid: UUID) = suspendTransaction {
         val minecraftAccountProviderId = AccountsTable
             .select(AccountsTable.providerAccountId, AccountsTable.provider, AccountsTable.userId)
-            .where((AccountsTable.provider eq "minecraft") and (AccountsTable.userId eq minecraftUuid))
+            .where((AccountsTable.provider eq "minecraft") and (AccountsTable.providerAccountId eq minecraftUuid.toString()))
             .firstOrNull()?.getOrNull(AccountsTable.userId)
             ?: return@suspendTransaction null
 
