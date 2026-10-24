@@ -11,7 +11,7 @@ surfPaperPluginApi {
     mainClass("dev.slne.surf.freebuild.whitelist.PaperMain")
     foliaSupported(true)
     generateLibraryLoader(false)
-    withSurfDatabaseR2dbc("1.1.0-SNAPSHOT", "dev.slne.surf.freebuild.whitelist.libs")
+    withSurfDatabaseR2dbc("2.3.5", "dev.slne.surf.freebuild.whitelist.libs")
     withCorePaper()
 
     withSurfRedis()
